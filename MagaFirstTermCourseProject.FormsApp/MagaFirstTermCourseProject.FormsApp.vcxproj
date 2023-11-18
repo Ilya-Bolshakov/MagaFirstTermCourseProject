@@ -156,6 +156,9 @@
     <ProjectReference Include="..\CommonTypes\CommonTypes.vcxproj">
       <Project>{c141ce2e-af51-4c0e-8b48-967a59799b9c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\CudaImage\CudaImage.vcxproj">
+      <Project>{317ab8cd-a0b9-462b-9405-c4b0b64ad682}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
