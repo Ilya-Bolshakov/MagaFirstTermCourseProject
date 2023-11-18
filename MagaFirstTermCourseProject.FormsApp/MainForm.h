@@ -213,7 +213,10 @@ namespace MagaFirstTermCourseProjectFormsApp {
 			// 
 			this->comboBoxMethods->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->comboBoxMethods->FormattingEnabled = true;
-			this->comboBoxMethods->Items->AddRange(gcnew cli::array< System::Object^  >(2) { L"KMeans последовательный", L"KMeans через OpenMP" });
+			this->comboBoxMethods->Items->AddRange(gcnew cli::array< System::Object^  >(3) {
+				L"KMeans последовательный", L"KMeans через OpenMP",
+					L"KMeans через Cuda"
+			});
 			this->comboBoxMethods->Location = System::Drawing::Point(282, 675);
 			this->comboBoxMethods->Name = L"comboBoxMethods";
 			this->comboBoxMethods->Size = System::Drawing::Size(211, 21);

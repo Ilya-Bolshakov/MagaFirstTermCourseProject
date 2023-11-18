@@ -65,8 +65,22 @@ public: CudaMethod()
 }
 public: ClusteredImage KMeans(std::vector<Pixel>& pixels, int k) override
 {
-	ClusteredImage c;
-	return  c;
+	HINSTANCE hGetProcIDDLL = LoadLibrary(L"CudaImage.dll");
+	if (!hGetProcIDDLL)
+	{
+		throw gcnew Exception();
+	}
+	typedef ClusteredImage(__stdcall* function)(std::vector<Pixel>&, int);
+	function calc = (function)
+		GetProcAddress(hGetProcIDDLL, "KMeans");
+	if (!calc)
+	{
+		throw gcnew Exception();
+	}
+
+	ClusteredImage image = calc(pixels, k);
+
+	return image;
 }
 };
 
@@ -81,6 +95,7 @@ public: Method^ GetMethod(int type)
 	{
 	case 0: return gcnew SequenceMethod();
 	case 1: return gcnew OpenMPMethod();
+	case 2: return gcnew CudaMethod();
 	default:
 		break;
 	}
