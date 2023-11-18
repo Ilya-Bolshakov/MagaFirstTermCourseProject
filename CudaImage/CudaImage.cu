@@ -3,78 +3,89 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "../MagaFirstTermCourseProject.FormsApp/ClusteredImage.h"
+#include <thrust/device_vector.h>
 
 using namespace CommonTypes;
 
+/*
+* DOCS
+* d_labels == assignments
+*/
 
 
-
-__global__ void kmeans_kernel(float* d_data, float* d_centroids, int* d_labels, int k, int num_pixels, int num_channels) {
+__global__ void kmeans_kernel(std::vector<Pixel> centroids, int* assignments, int k, std::vector<Pixel> pixels) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (idx < num_pixels) {
-		float min_dist = INFINITY;
+	if (idx < pixels.size()) {
+		float minDist = INFINITY;
 		int label = 0;
 
 		for (int i = 0; i < k; i++) {
 			float dist = 0.0f;
-			/*for (int j = 0; j < num_channels; j++) {
-				float diff = d_data[idx * num_channels + j] - d_centroids[i * num_channels + j];
-				dist += diff * diff;
-			}*/
+			
+			dist = sqrt(pow(pixels[idx].r - centroids[i].r, 2) + pow(pixels[idx].g - centroids[i].g, 2) + pow(pixels[idx].b - centroids[i].b, 2));
 
-			double dist = distance(pixels[i], centroids[j]);
-
-			if (dist < min_dist) {
-				min_dist = dist;
+			if (dist < minDist) {
+				minDist = dist;
 				label = i;
 			}
 		}
 
-		d_labels[idx] = label;
+		assignments[idx] = label;
 	}
 }
+
+
 
 
 ClusteredImage calc(std::vector<Pixel>& pixels, int k)
 {
 	std::vector<Pixel> centroids(k);
+	thrust::device_vector<int> assignments;
+
 	for (int i = 0; i < k; i++) {
 		centroids[i] = pixels[rand() % pixels.size()];
 	}
 
+	//cudaMalloc((void**)&d_pixels, sizeof(Pixel) * pixels.size());
+	//cudaMalloc((void**)&centroids, sizeof(Pixel) * centroids.size());
+	cudaMalloc((void**)&assignments, sizeof(int) * pixels.size());
 
-	ClusteredImage c;
+	thrust::device_vector<Pixel> d_pixels(pixels);
+	thrust::device_vector<Pixel> d_centroids(centroids);
 
-	Pixel p;
+	int block_size = 256;
+	int grid_size = (pixels.size() + block_size - 1) / block_size;
 
-	p.b = 5;
-	p.r = 10;
-	p.g = 50;
-
-	c.centroids.push_back(p);
-
-	//unsigned* dev_srcImage;
-	//size_t size = sizeof(unsigned) * width * height;
-	//if (cudaMalloc((void**)&dev_srcImage, size) !=
-	//	cudaError::cudaSuccess) return c;
-	//if (cudaMemcpy(dev_srcImage, srcImage, size,
-	//	cudaMemcpyHostToDevice) != cudaError::cudaSuccess)
-	//	return c;
-	//// ћаксимальное количество нитей на блок может
-	//	dim3 threads(128, 128);
-	//dim3 blocks((width + threads.x - 1) / threads.x,
-	//	(height + threads.y - 1) / threads.y);
-	//kernel << <threads, blocks >> > (dev_srcImage, width,
-	//	height);
-	//cudaError error = cudaMemcpy(srcImage, dev_srcImage,
-	//	size,
-	//	cudaMemcpyDeviceToHost);
-	//if (error != cudaError::cudaSuccess) return c;
-	//cudaFree(dev_srcImage);
+	kmeans_kernel <<<grid_size, block_size >>> (d_pixels, d_centroids, assignments, k);
 
 
+	std::vector<Pixel> sums(k);
+	std::vector<int> counts(k, 0);
+	for (int i = 0; i < pixels.size(); i++) {
+		sums[assignments[i]].r += pixels[i].r;
+		sums[assignments[i]].g += pixels[i].g;
+		sums[assignments[i]].b += pixels[i].b;
+		counts[assignments[i]]++;
+	}
+	for (int i = 0; i < k; i++) {
+		if (counts[i] == 0) counts[i]++;
+		centroids[i].r = sums[i].r / counts[i];
+		centroids[i].g = sums[i].g / counts[i];
+		centroids[i].b = sums[i].b / counts[i];
+	}
 
+	ClusteredImage image;
 
-	return c;
+	std::vector<int> a;
+
+	for (size_t i = 0; i < assignments.size(); i++)
+	{
+		a.push_back(assignments[i]);
+	}
+
+	image.assignments = a;
+	image.centroids = centroids;
+
+	return image;
 }
