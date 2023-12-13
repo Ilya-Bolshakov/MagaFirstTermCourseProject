@@ -8,30 +8,29 @@
 using namespace CommonTypes;
 
 
-__global__ void kmeans_kernel(float* d_data, float* d_centroids, int* d_labels, int* k, int* countPixels) {
+__global__ void kmeans_kernel(float* pixels, float* centroids, int* assignments, int* k, int* countPixels) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < *countPixels) {
-		double min_dist = sqrt((d_data[idx * 3] - d_centroids[0]) * (d_data[idx * 3] - d_centroids[0])
-							   + (d_data[idx * 3 + 1] - d_centroids[1]) * (d_data[idx * 3 + 1] - d_centroids[1])
-								   + (d_data[idx * 3 + 2] - d_centroids[2]) * (d_data[idx * 3 + 2] - d_centroids[2]));
+		double minDist = sqrt((pixels[idx * 3] - centroids[0]) * (pixels[idx * 3] - centroids[0])
+			+ (pixels[idx * 3 + 1] - centroids[1]) * (pixels[idx * 3 + 1] - centroids[1])
+			+ (pixels[idx * 3 + 2] - centroids[2]) * (pixels[idx * 3 + 2] - centroids[2]));
 		int minIndex = 0;
 
 		for (int j = 1; j < *k; j++) {
-			//float dist = 0.0f;
 
-			double dist = sqrt((d_data[idx * 3] - d_centroids[j * 3]) * (d_data[idx * 3] - d_centroids[j * 3])
-				+ (d_data[idx * 3 + 1] - d_centroids[j * 3 + 1]) * (d_data[idx * 3 + 1] - d_centroids[j * 3 + 1])
-				+ (d_data[idx * 3 + 2] - d_centroids[j * 3 + 2]) * (d_data[idx * 3 + 2] - d_centroids[j * 3 + 2]));
+			double dist = sqrt((pixels[idx * 3] - centroids[j * 3]) * (pixels[idx * 3] - centroids[j * 3])
+				+ (pixels[idx * 3 + 1] - centroids[j * 3 + 1]) * (pixels[idx * 3 + 1] - centroids[j * 3 + 1])
+				+ (pixels[idx * 3 + 2] - centroids[j * 3 + 2]) * (pixels[idx * 3 + 2] - centroids[j * 3 + 2]));
 
-			if (dist < min_dist) {
-				min_dist = dist;
+			if (dist < minDist) {
+				minDist = dist;
 				minIndex = j;
 			}
 		}
 
-		if (d_labels[idx] != minIndex) {
-			d_labels[idx] = minIndex;
+		if (assignments[idx] != minIndex) {
+			assignments[idx] = minIndex;
 		}
 	}
 }
@@ -84,7 +83,7 @@ ClusteredImage calc(std::vector<Pixel>& pixels, int k)
 
 
 	kmeans_kernel << <grid_size, block_size >> > (device_data, device_centroids, device_assignments, device_k, device_countPixels);
-	
+
 	int* assignmentsPtr = new int[pixels.size()];
 	cudaMemcpy(assignmentsPtr, device_assignments, sizeof(int) * pixels.size(), cudaMemcpyDeviceToHost);
 
@@ -157,9 +156,9 @@ bool healthCheck()
 	{
 		return false;
 	}
-	
 
-	
+
+
 }
 
 

@@ -389,8 +389,17 @@ private: System::Void textBox_TextChanged(System::Object^ sender, System::EventA
 }
 
 private: System::Void backgroundWorker_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
-	this->file = gcnew Bitmap(Bitmap::FromFile(openFileDialog->FileName));
-	pictureBox->Image = file;
+	try
+	{
+		this->file = gcnew Bitmap(Bitmap::FromFile(openFileDialog->FileName));
+		pictureBox->Image = file;
+	}
+	catch (System::Exception^ ex)
+	{
+		MessageBox::Show(ex->Message);
+	}
+
+	
 }
 private: System::Void backgroundWorker_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
 	loader->Hide();
