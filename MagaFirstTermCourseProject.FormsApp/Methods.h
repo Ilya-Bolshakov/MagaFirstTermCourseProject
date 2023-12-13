@@ -82,6 +82,31 @@ public: ClusteredImage KMeans(std::vector<Pixel>& pixels, int k) override
 
 	return image;
 }
+
+public: bool HealthCheck()
+{
+	HINSTANCE hGetProcIDDLL = LoadLibrary(L"CudaImage.dll");
+	if (!hGetProcIDDLL)
+	{
+		throw gcnew Exception();
+	}
+	typedef bool(__stdcall* function)();
+	function healthCheck = (function)
+		GetProcAddress(hGetProcIDDLL, "HealthCheck");
+	if (!healthCheck)
+	{
+		throw gcnew Exception();
+	}
+
+	try
+	{
+		return healthCheck();
+	}
+	catch (const std::exception&)
+	{
+		return false;
+	}
+}
 };
 
 

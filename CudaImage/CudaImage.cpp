@@ -7,6 +7,11 @@ ClusteredImage KMeans(std::vector<Pixel>& pixels, int k)
 	return calc(pixels, k);
 }
 
+bool HealthCheck()
+{
+	return healthCheck();
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD ul_reason_for_call,
 	LPVOID lpReserved)

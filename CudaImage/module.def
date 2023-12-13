@@ -2,3 +2,5 @@ LIBRARY
 EXPORTS
 KMeans @1 ;KMeans
 KMeans=_KMeans
+HealthCheck @2 ;HealthCheck
+HealthCheck=_HealthCheck

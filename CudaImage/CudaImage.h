@@ -15,4 +15,5 @@ using namespace CommonTypes;
 extern "C"
 {
 	ClusteredImage _DECLARATOR_ __cdecl KMeans(std::vector<Pixel>&, int);
+	bool _DECLARATOR_ __cdecl HealthCheck();
 }

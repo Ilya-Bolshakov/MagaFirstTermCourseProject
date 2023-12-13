@@ -122,6 +122,44 @@ ClusteredImage calc(std::vector<Pixel>& pixels, int k)
 	cudaFree(device_data);
 	cudaFree(device_assignments);
 	cudaFree(device_assignments);
+	cudaFree(device_countPixels);
+	cudaFree(device_k);
 
 	return image;
 }
+
+
+__global__ void kernel_hc(bool* hc)
+{
+	*hc = true;
+}
+
+
+bool healthCheck()
+{
+	try
+	{
+		bool* hc = new bool;
+		*hc = false;
+
+		bool* device_hc;
+
+		cudaMalloc((void**)&device_hc, sizeof(bool));
+		cudaMemcpy(device_hc, &hc, sizeof(bool), cudaMemcpyHostToDevice);
+
+
+		kernel_hc << <1, 1 >> > (device_hc);
+		cudaMemcpy(hc, device_hc, sizeof(bool), cudaMemcpyDeviceToHost);
+		cudaFree(device_hc);
+		return *hc;
+	}
+	catch (const std::exception&)
+	{
+		return false;
+	}
+	
+
+	
+}
+
+

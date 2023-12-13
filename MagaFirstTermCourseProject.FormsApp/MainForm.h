@@ -310,7 +310,6 @@ namespace MagaFirstTermCourseProjectFormsApp {
 	private: System::Void ToolStripMenuItemFileOpen_Click(System::Object^ sender, System::EventArgs^ e) {
 		if (openFileDialog->ShowDialog() == System::Windows::Forms::DialogResult::OK)
 		{
-			loader->Show();
 			this->Enabled = false;
 			backgroundWorker->RunWorkerAsync();
 		}
@@ -397,6 +396,7 @@ private: System::Void backgroundWorker_RunWorkerCompleted(System::Object^ sender
 	loader->Hide();
 	this->Enabled = true;
 	this->Focus();
+	SetStartButtonState();
 }
 private: System::Void backgroundWorkerImage_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 	auto sw = gcnew Stopwatch();
@@ -442,7 +442,21 @@ private: System::Void backgroundWorkerImage_RunWorkerCompleted(System::Object^ s
 
 }
 private: System::Void cudaHealthCheckToolStripMenuItem_Click(System::Object^ sender, System::EventArgs^ e) {
+	auto hc = gcnew CudaMethod();
+	auto ok = hc->HealthCheck();
 
+	String^ info = "Cuda ";
+
+	if (ok)
+	{
+		info += "работает!";
+	}
+	else
+	{
+		info += "не работает!";
+	}
+
+	MessageBox::Show(info);
 }
 };
 }
