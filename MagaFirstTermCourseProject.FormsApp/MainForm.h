@@ -74,6 +74,7 @@ namespace MagaFirstTermCourseProjectFormsApp {
 	private: System::Windows::Forms::ErrorProvider^ errorProvider;
 	private: System::ComponentModel::BackgroundWorker^ backgroundWorker;
 	private: System::ComponentModel::BackgroundWorker^ backgroundWorkerImage;
+	private: System::Windows::Forms::ToolStripMenuItem^ cudaHealthCheckToolStripMenuItem;
 	private: System::ComponentModel::IContainer^ components;
 
 	protected:
@@ -111,6 +112,7 @@ namespace MagaFirstTermCourseProjectFormsApp {
 			this->errorProvider = (gcnew System::Windows::Forms::ErrorProvider(this->components));
 			this->backgroundWorker = (gcnew System::ComponentModel::BackgroundWorker());
 			this->backgroundWorkerImage = (gcnew System::ComponentModel::BackgroundWorker());
+			this->cudaHealthCheckToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox))->BeginInit();
 			this->menuStrip->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBoxResult))->BeginInit();
@@ -183,7 +185,10 @@ namespace MagaFirstTermCourseProjectFormsApp {
 			// 
 			// healthChecksToolStripMenuItem
 			// 
-			this->healthChecksToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->openMPHealthCheckToolStripMenuItem });
+			this->healthChecksToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+				this->openMPHealthCheckToolStripMenuItem,
+					this->cudaHealthCheckToolStripMenuItem
+			});
 			this->healthChecksToolStripMenuItem->Name = L"healthChecksToolStripMenuItem";
 			this->healthChecksToolStripMenuItem->Size = System::Drawing::Size(92, 20);
 			this->healthChecksToolStripMenuItem->Text = L"HealthChecks";
@@ -259,6 +264,13 @@ namespace MagaFirstTermCourseProjectFormsApp {
 			this->backgroundWorkerImage->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MainForm::backgroundWorkerImage_DoWork);
 			this->backgroundWorkerImage->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MainForm::backgroundWorkerImage_RunWorkerCompleted);
 			// 
+			// cudaHealthCheckToolStripMenuItem
+			// 
+			this->cudaHealthCheckToolStripMenuItem->Name = L"cudaHealthCheckToolStripMenuItem";
+			this->cudaHealthCheckToolStripMenuItem->Size = System::Drawing::Size(195, 22);
+			this->cudaHealthCheckToolStripMenuItem->Text = L"Cuda Health Check";
+			this->cudaHealthCheckToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::cudaHealthCheckToolStripMenuItem_Click);
+			// 
 			// MainForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -277,7 +289,7 @@ namespace MagaFirstTermCourseProjectFormsApp {
 			this->MainMenuStrip = this->menuStrip;
 			this->Name = L"MainForm";
 			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
-			this->Text = L"MainForm";
+			this->Text = L"Кластеризация изображений";
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox))->EndInit();
 			this->menuStrip->ResumeLayout(false);
 			this->menuStrip->PerformLayout();
@@ -293,27 +305,6 @@ namespace MagaFirstTermCourseProjectFormsApp {
 		loader->Show();
 		this->Enabled = false;
 		backgroundWorkerImage->RunWorkerAsync();
-
-		
-
-		//Bitmap^ clusteredImage = gcnew Bitmap(file->Width, file->Height);
-
-		/*for (int i = 0; i < file->Width; i++)
-		{
-			for (int j = 0; j < file->Height; j++)
-			{
-				int centroidIndex = image.assignments[j * file->Width + i]; 
-				if (centroidIndex >= 0 && centroidIndex < image.centroids.size()) 
-				{
-					Color newColor = Color::FromArgb(image.centroids[centroidIndex].r, image.centroids[centroidIndex].g, image.centroids[centroidIndex].b);
-					clusteredImage->SetPixel(i, j, newColor); 
-				}
-				else
-				{
-					throw gcnew Exception("wdwd");
-				}
-			}
-		}*/
 	}
 
 	private: System::Void ToolStripMenuItemFileOpen_Click(System::Object^ sender, System::EventArgs^ e) {
@@ -448,6 +439,9 @@ private: System::Void backgroundWorkerImage_RunWorkerCompleted(System::Object^ s
 	this->Enabled = true;
 	this->Focus();
 	pictureBoxResult->Image = clusteredImage;
+
+}
+private: System::Void cudaHealthCheckToolStripMenuItem_Click(System::Object^ sender, System::EventArgs^ e) {
 
 }
 };

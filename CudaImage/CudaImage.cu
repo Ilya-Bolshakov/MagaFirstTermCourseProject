@@ -7,35 +7,32 @@
 
 using namespace CommonTypes;
 
-/*
-* DOCS
-* d_labels == assignments
-*/
 
-
-__global__ void kmeans_kernel(float* d_data, float* d_centroids, int* d_labels, int k, int countPixels) {
+__global__ void kmeans_kernel(float* d_data, float* d_centroids, int* d_labels, int* k, int* countPixels) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (idx < countPixels) {
-		float min_dist = sqrt((d_data[idx * 3] - d_centroids[0]) * (d_data[idx * 3] - d_centroids[0])
+	if (idx < *countPixels) {
+		double min_dist = sqrt((d_data[idx * 3] - d_centroids[0]) * (d_data[idx * 3] - d_centroids[0])
 							   + (d_data[idx * 3 + 1] - d_centroids[1]) * (d_data[idx * 3 + 1] - d_centroids[1])
 								   + (d_data[idx * 3 + 2] - d_centroids[2]) * (d_data[idx * 3 + 2] - d_centroids[2]));
-		int label = 0;
+		int minIndex = 0;
 
-		for (int i = 0; i < k; i++) {
-			float dist = 0.0f;
+		for (int j = 1; j < *k; j++) {
+			//float dist = 0.0f;
 
-			dist = sqrt((d_data[idx * 3] - d_centroids[k * 3]) * (d_data[idx * 3] - d_centroids[k * 3])
-				+ (d_data[idx * 3 + 1] - d_centroids[k * 3 + 1]) * (d_data[idx * 3 + 1] - d_centroids[k * 3 + 1])
-				+ (d_data[idx * 3 + 2] - d_centroids[k * 3 + 2]) * (d_data[idx * 3 + 2] - d_centroids[k * 3 + 2]));
+			double dist = sqrt((d_data[idx * 3] - d_centroids[j * 3]) * (d_data[idx * 3] - d_centroids[j * 3])
+				+ (d_data[idx * 3 + 1] - d_centroids[j * 3 + 1]) * (d_data[idx * 3 + 1] - d_centroids[j * 3 + 1])
+				+ (d_data[idx * 3 + 2] - d_centroids[j * 3 + 2]) * (d_data[idx * 3 + 2] - d_centroids[j * 3 + 2]));
 
 			if (dist < min_dist) {
 				min_dist = dist;
-				label = i;
+				minIndex = j;
 			}
 		}
 
-		d_labels[idx] = label;
+		if (d_labels[idx] != minIndex) {
+			d_labels[idx] = minIndex;
+		}
 	}
 }
 
@@ -46,6 +43,8 @@ ClusteredImage calc(std::vector<Pixel>& pixels, int k)
 	float* device_data;
 	float* device_centroids;
 	int* device_assignments;
+	int* device_k;
+	int* device_countPixels;
 
 	float* pixelsInPtr = new float[pixels.size() * 3];
 
@@ -65,25 +64,29 @@ ClusteredImage calc(std::vector<Pixel>& pixels, int k)
 		centroidsPtr[3 * i + 2] = rndPixel.b;
 	}
 
+	int countPixels = pixels.size();
+
 	cudaMalloc((void**)&device_data, sizeof(float) * pixels.size() * 3);
 	cudaMalloc((void**)&device_centroids, sizeof(float) * k * 3);
 	cudaMalloc((void**)&device_assignments, sizeof(int) * pixels.size());
+	cudaMalloc((void**)&device_k, sizeof(int));
+	cudaMalloc((void**)&device_countPixels, sizeof(int));
 
 	cudaMemcpy(device_data, pixelsInPtr, sizeof(float) * pixels.size() * 3, cudaMemcpyHostToDevice);
 	cudaMemcpy(device_centroids, centroidsPtr, sizeof(float) * k * 3, cudaMemcpyHostToDevice);
 	cudaMemcpy(device_assignments, centroidsPtr, sizeof(float) * k * 3, cudaMemcpyHostToDevice);
+	cudaMemcpy(device_k, &k, sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(device_countPixels, &countPixels, sizeof(int), cudaMemcpyHostToDevice);
 
 
 	dim3 block_size = 256;
 	dim3 grid_size = (pixels.size() + 256 - 1) / 256;
 
-	kmeans_kernel <<<grid_size, block_size >>> (device_data, device_centroids, device_assignments, k, pixels.size());
 
-	int* assignmentsPtr = new int[pixels.size()];
-    cudaMemcpy(assignmentsPtr, device_assignments, sizeof(int) * pixels.size(), cudaMemcpyDeviceToHost);
-
+	kmeans_kernel << <grid_size, block_size >> > (device_data, device_centroids, device_assignments, device_k, device_countPixels);
 	
-
+	int* assignmentsPtr = new int[pixels.size()];
+	cudaMemcpy(assignmentsPtr, device_assignments, sizeof(int) * pixels.size(), cudaMemcpyDeviceToHost);
 
 	std::vector<Pixel> sums(k);
 	std::vector<int> counts(k, 0);
@@ -106,7 +109,14 @@ ClusteredImage calc(std::vector<Pixel>& pixels, int k)
 
 	ClusteredImage image;
 
-	//image.assignments = assignments;
+	auto vectorAssignments = std::vector<int>(pixels.size());
+
+	for (size_t i = 0; i < pixels.size(); i++)
+	{
+		vectorAssignments[i] = assignmentsPtr[i];
+	}
+
+	image.assignments = vectorAssignments;
 	image.centroids = centroids;
 
 	cudaFree(device_data);
