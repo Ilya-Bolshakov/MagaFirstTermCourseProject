@@ -409,12 +409,12 @@ private: System::Void backgroundWorker_RunWorkerCompleted(System::Object^ sender
 }
 private: System::Void backgroundWorkerImage_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 	auto sw = gcnew Stopwatch();
-	sw->Start();
+	sw->Start(); // Запускает таймер для подсчета времени выполнения
 
-	auto pixels = GetPixels();
-	auto image = method->KMeans(pixels, Convert::ToInt32(textBox->Text));
+	auto pixels = GetPixels(); // Получение пикселей для обработки
+	auto image = method->KMeans(pixels, Convert::ToInt32(textBox->Text)); // Запуск алгоритма
 
-	sw->Stop();
+	sw->Stop(); // Останавливает таймер
 
 	Bitmap^ clusteredImage = gcnew Bitmap(file->Width, file->Height);
 

@@ -21,29 +21,35 @@ namespace KMeansOpenMP {
 
 
 		ClusteredImage kMeansClustering(std::vector<Pixel>& pixels, int k) {
-			omp_set_num_threads(omp_get_max_threads());
+			auto a = omp_get_max_threads();
+			omp_set_num_threads(2);
 			std::vector<Pixel> centroids(k);
 			for (int i = 0; i < k; i++) {
 				centroids[i] = pixels[rand() % pixels.size()];
 			}
 
 			std::vector<int> assignments(pixels.size());
-
+			int o = 0;
 #pragma omp parallel
 			{
 #pragma omp for 
 				for (int i = 0; i < pixels.size(); i++) {
 					double minDist = distance(pixels[i], centroids[0]);
+					//o++;
 					int minIndex = 0;
 					for (int j = 1; j < k; j++) {
 						double dist = distance(pixels[i], centroids[j]);
+						//o++;
 						if (dist < minDist) {
 							minDist = dist;
+							//o++;
 							minIndex = j;
+							//o++;
 						}
 					}
 					if (assignments[i] != minIndex) {
 						assignments[i] = minIndex;
+						//o++;
 					}
 				}
 			}
